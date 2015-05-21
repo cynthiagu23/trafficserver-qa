@@ -28,6 +28,7 @@ import hashlib
 import tsqa.configs
 import tsqa.utils
 import logging
+import time
 
 log = logging.getLogger(__name__)
 
@@ -315,6 +316,24 @@ class Environment(object):
         else:
             self.layout = None
 
+        #process environment options
+        self.keep_tmp = False
+        if filter(lambda x: '--keep-tmp' in x, sys.argv):
+            self.keep_tmp=True
+        self.sleep_in_sec = 0
+        if filter(lambda x: '--sleep-in-sec' in x, sys.argv):
+            n = sys.argv.index('--sleep-in-sec')
+            self.sleep_in_sec = sys.argv[n+1]
+        self.standalone_ats_port = -1
+        if filter(lambda x: '--standalone-ats-port' in x, sys.argv):
+            n = sys.argv.index('--standalone-ats-port')
+            self.standalone_ats_port = int(sys.argv[n+1])
+            if self.standalone_ats_port <= 0 or self.standalone_ats_port >= 65536:
+                log.info("invalid port number assigned to --standalone_ats_port, start an ATS")
+                self.standalone_ats_port = -1
+
+
+
     def create(self):
         """
         """
@@ -372,7 +391,10 @@ class Environment(object):
             else:
                 os.chmod(dirname, 0777)
 
-        http_server_port = tsqa.utils.bind_unused_port()[1]
+        if self.standalone_ats_port != -1:
+            http_server_port = self.standalone_ats_port
+        else:
+            http_server_port = tsqa.utils.bind_unused_port()[1]
         manager_mgmt_port = tsqa.utils.bind_unused_port()[1]
         admin_port = tsqa.utils.bind_unused_port()[1]
 
@@ -435,19 +457,28 @@ class Environment(object):
         installed files.
         """
         self.stop()
-        shutil.rmtree(self.layout.prefix, ignore_errors=True)
+        if self.keep_tmp is False:
+            shutil.rmtree(self.layout.prefix, ignore_errors=True)
         self.layout = Layout(None)
 
     def start(self):
+        if self.standalone_ats_port != -1:
+            return
         if self.running():  # if its already running, don't start another one
             raise Exception('traffic cop already started')
         log.debug("Starting traffic cop")
         assert(os.path.isfile(os.path.join(self.layout.sysconfdir, 'records.config')))
         self.__exec_cop()
         log.debug("Started traffic cop: %s", self.cop)
+        if int(self.sleep_in_sec) > 0:
+            time.sleep(self.sleep_in_sec)
 
     # TODO: exception if already stopped?
     def stop(self):
+        if self.standalone_ats_port != -1:
+            return
+        if int(self.sleep_in_sec) > 0:
+            time.sleep(self.sleep_in_sec)
         log.debug("Stopping traffic cop: %s", self.cop)
         if self.running():
             self.cop.kill()
@@ -462,6 +493,8 @@ class Environment(object):
             self.cop.terminate()  # TODO: remove?? or wait...
 
     def running(self):
+        if self.standalone_ats_port != -1:
+            return True
         if self.cop is None:
             return False
         self.cop.poll()

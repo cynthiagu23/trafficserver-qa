@@ -17,8 +17,8 @@ class ConfPlugin(Plugin):
         parser.add_option('--sleep-in-sec', type='int',
                           dest='sleep_in_sec',
                           help='Sleep time before ATS start and after ATS stop to allow enough time for async tests')
-        parser.add_option('--standalone', action='store_true',
+        parser.add_option('--standalone-ats-port', type='int',
                           dest='stand_alone',
-                          help="Allow standalone test without auto deploying ATS")
+                          help="Allow standalone test with pre-deployed ATS port")
 
 
