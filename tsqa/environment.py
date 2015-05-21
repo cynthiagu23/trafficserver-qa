@@ -24,11 +24,13 @@ import sys
 import time
 import multiprocessing
 import hashlib
+import socket;
 
 import tsqa.configs
 import tsqa.utils
 import logging
 import time
+import plugin.conf_plugin
 
 log = logging.getLogger(__name__)
 
@@ -317,20 +319,17 @@ class Environment(object):
             self.layout = None
 
         #process environment options
-        self.keep_tmp = False
-        if filter(lambda x: '--keep-tmp' in x, sys.argv):
-            self.keep_tmp=True
+        self.keep_env = False
+        if plugin.conf_plugin.args.keep_env:
+            self.keep_env = plugin.conf_plugin.args.keep_env
         self.sleep_in_sec = 0
-        if filter(lambda x: '--sleep-in-sec' in x, sys.argv):
-            n = sys.argv.index('--sleep-in-sec')
-            self.sleep_in_sec = sys.argv[n+1]
+        if plugin.conf_plugin.args.sleep_in_sec:
+            self.sleep_in_sec = plugin.conf_plugin.args.sleep_in_sec
         self.standalone_ats_port = -1
-        if filter(lambda x: '--standalone-ats-port' in x, sys.argv):
-            n = sys.argv.index('--standalone-ats-port')
-            self.standalone_ats_port = int(sys.argv[n+1])
-            if self.standalone_ats_port <= 0 or self.standalone_ats_port >= 65536:
+        if plugin.conf_plugin.args.standalone_ats_port:
+            self.standalone_ats_port = plugin.conf_plugin.args.standalone_ats_port
+            if self.standalone_ats_port != -1 and plugin.conf_plugin.args.standalone_ats_port not in range(0, 65536):
                 log.info("invalid port number assigned to --standalone_ats_port, start an ATS")
-                self.standalone_ats_port = -1
 
 
 
@@ -457,8 +456,7 @@ class Environment(object):
         installed files.
         """
         self.stop()
-        if self.keep_tmp is False:
-            shutil.rmtree(self.layout.prefix, ignore_errors=True)
+        shutil.rmtree(self.layout.prefix, ignore_errors=True)
         self.layout = Layout(None)
 
     def start(self):
@@ -470,14 +468,12 @@ class Environment(object):
         assert(os.path.isfile(os.path.join(self.layout.sysconfdir, 'records.config')))
         self.__exec_cop()
         log.debug("Started traffic cop: %s", self.cop)
-        if int(self.sleep_in_sec) > 0:
-            time.sleep(self.sleep_in_sec)
 
     # TODO: exception if already stopped?
     def stop(self):
         if self.standalone_ats_port != -1:
             return
-        if int(self.sleep_in_sec) > 0:
+        if self.sleep_in_sec > 0:
             time.sleep(self.sleep_in_sec)
         log.debug("Stopping traffic cop: %s", self.cop)
         if self.running():
@@ -494,7 +490,17 @@ class Environment(object):
 
     def running(self):
         if self.standalone_ats_port != -1:
-            return True
+            #try to connect to the port
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            result = sock.connect_ex(('127.0.0.1', self.standalone_ats_port))
+            if result == 0:
+                log.info("The port for standalone ATS is open")
+                sock.close()
+                return True
+            else:
+                log.info("The port for standalone ATS is not open")
+                sock.close()
+                return False
         if self.cop is None:
             return False
         self.cop.poll()

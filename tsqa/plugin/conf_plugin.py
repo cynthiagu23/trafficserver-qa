@@ -1,5 +1,6 @@
 import logging
 import os
+import traceback
 
 from nose.plugins import Plugin
 
@@ -12,8 +13,8 @@ class ConfPlugin(Plugin):
         """Register commandline options.
         """
         Plugin.options(self, parser, env)
-        parser.add_option('--keep-tmp', action='store_true', dest='keep_tmp', default=True,
-                          help="Keep tmp files after running successfully")
+        parser.add_option('--keep-env', action='store_true', dest='keep_env', default=True,
+                          help="Keep env files after running successfully")
         parser.add_option('--sleep-in-sec', type='int', default=0,
                           dest='sleep_in_sec',
                           help='Sleep time before ATS start and after ATS stop to allow enough time for async tests')
@@ -25,4 +26,3 @@ class ConfPlugin(Plugin):
         Plugin.configure(self, options, conf)
         global args
         args = options
-

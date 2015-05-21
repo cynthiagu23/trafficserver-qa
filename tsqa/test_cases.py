@@ -117,7 +117,7 @@ class EnvironmentCase(unittest.TestCase):
         # call parent destructor
         super(EnvironmentCase, cls).tearDownClass()
         # if the test was successful, tear down the env
-        if cls.__successful:
+        if cls.__successful and (cls.environment.keep_env is True):
             cls.environment.destroy()  # this will tear down any processes that we started
 
     # Some helpful properties
