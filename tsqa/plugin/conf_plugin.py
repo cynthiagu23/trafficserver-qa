@@ -17,10 +17,10 @@ class ConfPlugin(Plugin):
                           help="Keep env files after running successfully")
         parser.add_option('--sleep-in-sec', type='int', default=0,
                           dest='sleep_in_sec',
-                          help='Sleep time before ATS start and after ATS stop to allow enough time for async tests')
-        parser.add_option('--standalone-ats-port', type='int', default=-1,
-                          dest='standalone_ats_port',
-                          help="Allow standalone test with pre-deployed ATS port")
+                          help='Sleep time after ATS stop to allow enough time for async logs')
+        parser.add_option('--standalone-server-port', type='string',
+                          dest='standalone_server_port',
+                          help="Allow standalone test with pre-deployed ATS server port")
 
     def configure(self, options, conf):
         Plugin.configure(self, options, conf)

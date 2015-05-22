@@ -24,7 +24,7 @@ import sys
 import time
 import multiprocessing
 import hashlib
-import socket;
+import socket
 
 import tsqa.configs
 import tsqa.utils
@@ -319,19 +319,9 @@ class Environment(object):
             self.layout = None
 
         #process environment options
-        self.keep_env = False
-        if plugin.conf_plugin.args.keep_env:
-            self.keep_env = plugin.conf_plugin.args.keep_env
         self.sleep_in_sec = 0
         if plugin.conf_plugin.args.sleep_in_sec:
             self.sleep_in_sec = plugin.conf_plugin.args.sleep_in_sec
-        self.standalone_ats_port = -1
-        if plugin.conf_plugin.args.standalone_ats_port:
-            self.standalone_ats_port = plugin.conf_plugin.args.standalone_ats_port
-            if self.standalone_ats_port != -1 and plugin.conf_plugin.args.standalone_ats_port not in range(0, 65536):
-                log.info("invalid port number assigned to --standalone_ats_port, start an ATS")
-
-
 
     def create(self):
         """
@@ -390,8 +380,8 @@ class Environment(object):
             else:
                 os.chmod(dirname, 0777)
 
-        if self.standalone_ats_port != -1:
-            http_server_port = self.standalone_ats_port
+        if plugin.conf_plugin.args.standalone_server_port:
+            http_server_port = plugin.conf_plugin.args.standalone_server_port
         else:
             http_server_port = tsqa.utils.bind_unused_port()[1]
         manager_mgmt_port = tsqa.utils.bind_unused_port()[1]
@@ -460,7 +450,7 @@ class Environment(object):
         self.layout = Layout(None)
 
     def start(self):
-        if self.standalone_ats_port != -1:
+        if plugin.conf_plugin.args.standalone_server_port:
             return
         if self.running():  # if its already running, don't start another one
             raise Exception('traffic cop already started')
@@ -471,7 +461,7 @@ class Environment(object):
 
     # TODO: exception if already stopped?
     def stop(self):
-        if self.standalone_ats_port != -1:
+        if plugin.conf_plugin.args.standalone_server_port:
             return
         if self.sleep_in_sec > 0:
             time.sleep(self.sleep_in_sec)
@@ -489,16 +479,16 @@ class Environment(object):
             self.cop.terminate()  # TODO: remove?? or wait...
 
     def running(self):
-        if self.standalone_ats_port != -1:
+        if plugin.conf_plugin.args.standalone_server_port:
             #try to connect to the port
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            result = sock.connect_ex(('127.0.0.1', self.standalone_ats_port))
+            result = sock.connect_ex(('127.0.0.1', int(plugin.conf_plugin.args.standalone_server_port)))
             if result == 0:
-                log.info("The port for standalone ATS is open")
+                log.debug("Standalone ATS server port is open")
                 sock.close()
                 return True
             else:
-                log.info("The port for standalone ATS is not open")
+                log.error("Standalone ATS server port is not open")
                 sock.close()
                 return False
         if self.cop is None:
