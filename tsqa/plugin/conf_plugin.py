@@ -13,7 +13,7 @@ class ConfPlugin(Plugin):
         """Register commandline options.
         """
         Plugin.options(self, parser, env)
-        parser.add_option('--keep-env', action='store_true', dest='keep_env', default=True,
+        parser.add_option('--keep-env', action='store_true', dest='keep_env', default=False,
                           help="Keep env files after running successfully")
         parser.add_option('--sleep-in-sec', type='int', default=0,
                           dest='sleep_in_sec',

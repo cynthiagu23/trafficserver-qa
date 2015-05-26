@@ -118,8 +118,12 @@ class EnvironmentCase(unittest.TestCase):
         # call parent destructor
         super(EnvironmentCase, cls).tearDownClass()
         # if the test was successful, tear down the env
-        if cls.__successful and ((not plugin.conf_plugin.args.keep_env) or (plugin.conf_plugin.args.keep_env is False)):
-            cls.environment.destroy()  # this will tear down any processes that we started
+        if hasattr(plugin.conf_plugin, 'args'):
+            if cls.__successful and ((not plugin.conf_plugin.args.keep_env) or (plugin.conf_plugin.args.keep_env is False)):
+                cls.environment.destroy()  # this will tear down any processes that we started
+        else:
+            if cls.__successful:
+                cls.environment.destroy()
 
     # Some helpful properties
     @property
