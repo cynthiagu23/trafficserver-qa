@@ -9,6 +9,7 @@ log = logging.getLogger('nose.plugins.ConfPlugin')
 class ConfPlugin(Plugin):
 
     name = 'conf-plugin'
+
     def options(self, parser, env=os.environ):
         """Register commandline options.
         """

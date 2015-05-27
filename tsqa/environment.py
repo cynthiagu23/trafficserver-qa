@@ -24,7 +24,7 @@ import sys
 import time
 import multiprocessing
 import hashlib
-import socket;
+import socket
 
 import tsqa.configs
 import tsqa.utils
@@ -320,9 +320,8 @@ class Environment(object):
 
         #process environment options
         self.sleep_in_sec = 0
-        if hasattr(plugin.conf_plugin, 'args'):
-            if plugin.conf_plugin.args.sleep_in_sec:
-                self.sleep_in_sec = plugin.conf_plugin.args.sleep_in_sec
+        if hasattr(plugin.conf_plugin, 'args') and plugin.conf_plugin.args.sleep_in_sec:
+            self.sleep_in_sec = plugin.conf_plugin.args.sleep_in_sec
 
     def create(self):
         """
@@ -485,7 +484,7 @@ class Environment(object):
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             result = sock.connect_ex(('127.0.0.1', int(plugin.conf_plugin.args.standalone_server_port)))
             if result == 0:
-                log.info("Standalone ATS server port is open")
+                log.debug("Standalone ATS server port is open")
                 sock.close()
                 return True
             else:
